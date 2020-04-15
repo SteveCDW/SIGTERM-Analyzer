@@ -1,11 +1,10 @@
-[root@h-sldb-msp-4 sigterm_analyzer]# cat sigterm_analyzer.bash 
 #!/bin/bash
 # Author: Steve Chapman (stevcha@cdw.com)
 # Purpose: Provide insight into SIGTERM log messages
 #
 # New in version:
-#  2.2 - Fixed problem where backspace or non-numeric response (other than "q")
-#        caused the script to spit a bunch of errors before returning the prompt
+#  2.2 - Added Process name to monitor-output
+#      - Fixed bug where backspace or non-numeric responses to variables threw errors
 #  2.1 - Integration of 2.0 and 1.4
 #  2.0 - Showstopper Logging Checks
 #  1.4 - "count-only" and "monitor-output" options added
@@ -82,7 +81,7 @@ start_report () {
                 log_it ""
                 [[ $COUNT_ONLY ]] && last_step && exit 0
         else
-                echo -n "${COL_NAME},${NUM_FOUND}"
+                echo -n "${COL_NAME},${PROCESS},${NUM_FOUND}"
                 last_step && exit 0
         fi
 }
@@ -122,7 +121,7 @@ get_logs () {
         [[ $SHOWSTOP ]] && ind=0 &&  while [ $ind -lt ${#DTS_SORT[@]} ] ; do LINE_DATE="${DTS_SORT[$ind]}" ; caused_by_showstopper ; ((ind++)) ; done
         if [ $NUM_FOUND -eq 0 ] ; then
                 if [ $MON_OUT ] ; then
-                        echo -n "${COL_NAME},0" 
+                        echo -n "${COL_NAME},${PROCESS},0" 
                         last_step && exit 0
                 else
                         echo -n "No $PROCESS SIGTERMs found on $COL_NAME [${MODULE}]" 
