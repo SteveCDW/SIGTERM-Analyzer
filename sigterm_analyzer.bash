@@ -1,8 +1,11 @@
+[root@h-sldb-msp-4 sigterm_analyzer]# cat sigterm_analyzer.bash 
 #!/bin/bash
 # Author: Steve Chapman (stevcha@cdw.com)
 # Purpose: Provide insight into SIGTERM log messages
 #
 # New in version:
+#  2.2 - Fixed problem where backspace or non-numeric response (other than "q")
+#        caused the script to spit a bunch of errors before returning the prompt
 #  2.1 - Integration of 2.0 and 1.4
 #  2.0 - Showstopper Logging Checks
 #  1.4 - "count-only" and "monitor-output" options added
@@ -20,7 +23,7 @@
 #      - Code clean-up
 #      - Support for using Collector Name instead of ID
 #
-VER="2.1"
+VER="2.2"
 re='^[0-9]+$'
 EXCLUDE_COUNT=0
 declare -a APP_CAT DEV_CAT
@@ -275,7 +278,7 @@ if [ ! $MODULE ] ; then
                 printf "Which collector ID do you wish to analyze? [\"q\" to quit] "
                 read MODULE
                 [[ "$MODULE" == "q" ]] && last_step && exit 0
-                for is_match in ${MOD_OPTIONS[@]} ; do [[ $is_match -eq $MODULE ]] && move_on=1 ; done
+                [[ $MODULE =~ $re ]] && for is_match in ${MOD_OPTIONS[@]} ; do [[ $is_match -eq $MODULE ]] && move_on=1 ; done
                 [[ ! $move_on ]] && unset MODULE 
         done
         unset move_on
@@ -293,7 +296,7 @@ if [ ! $PROC_NUM ] ; then
                 printf "Which process ID would you like to analyze? [\"q\" to quit] "
                 read PROC_NUM
                 [[ "$PROC_NUM" == "q" ]] && last_step && exit 0
-                for is_match in ${PROC_OPTIONS[@]} ; do [[ $is_match -eq $PROC_NUM ]] && move_on=1 ; done
+                [[ $PROC_NUM =~ $re ]] && for is_match in ${PROC_OPTIONS[@]} ; do [[ $is_match -eq $PROC_NUM ]] && move_on=1 ; done
                 [[ ! $move_on ]] && unset PROC_NUM
         done
         PROCESS="$(sql_cmd "SELECT name FROM master.system_settings_procs WHERE aid=$PROC_NUM" | awk -F": " {'print $2'})"
