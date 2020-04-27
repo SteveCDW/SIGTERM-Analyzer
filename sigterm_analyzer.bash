@@ -3,6 +3,7 @@
 # Purpose: Provide insight into SIGTERM log messages
 #
 # New in version:
+#  2.3 - Showstopper log message changed, so had to update the showstopper detection lines
 #  2.2 - Added Process name to monitor-output
 #      - Fixed bug where backspace or non-numeric responses to variables threw errors
 #  2.1 - Integration of 2.0 and 1.4
@@ -22,7 +23,7 @@
 #      - Code clean-up
 #      - Support for using Collector Name instead of ID
 #
-VER="2.2"
+VER="2.3"
 re='^[0-9]+$'
 EXCLUDE_COUNT=0
 declare -a APP_CAT DEV_CAT
@@ -61,14 +62,14 @@ log_it () {
 
 detect_showstopper_activity () {
 # Went with minutes instead of seconds because sometimes the SIGTERM caused by showstopper doesn't get logged until after SiLo is restarted for a few seconds
-#        SS_STOP_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Stopping SiLo' $DATEQ") )
-#        SS_START_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Starting SiLo' $DATEQ") )
-        SS_STOP_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i\") FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Stopping SiLo' $DATEQ") )
-        SS_START_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i\") FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Starting SiLo' $DATEQ") )
+#        SS_STOP_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Stopping SiLo%' $DATEQ") )
+#        SS_START_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Starting SiLo%' $DATEQ") )
+        SS_STOP_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i\") FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Stopping SiLo%' $DATEQ") )
+        SS_START_TIMES+=( $(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i\") FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Starting SiLo%' $DATEQ") )
         [[ ! ${SS_STOP_TIMES[@]} ]] && return
         if (( ${SS_START_TIMES[0]} < ${SS_STOP_TIMES[0]} )) ; then
-                INITIAL_START_TIME="$(date -d "$(sql_cmd "SELECT DATE(date) FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Starting SiLo' $DATEQ LIMIT 1") -1 days" +%Y-%m-%d)"
-                INITIAL_STOP_TIME=$(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message = 'showstopper: Stopping SiLo' AND DATE(date) = \"$INITIAL_START_TIME\" ORDER BY date DESC LIMIT 1")
+                INITIAL_START_TIME="$(date -d "$(sql_cmd "SELECT DATE(date) FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Starting SiLo%' $DATEQ LIMIT 1") -1 days" +%Y-%m-%d)"
+                INITIAL_STOP_TIME=$(sql_cmd "SELECT DATE_FORMAT(date, \"%Y%m%d%H%i%S\") FROM device_logs.logs_${COL_DID} WHERE message LIKE 'showstopper: Stopping SiLo%' AND DATE(date) = \"$INITIAL_START_TIME\" ORDER BY date DESC LIMIT 1")
                 SS_STOP_TIMES=("$INITIAL_STOP_TIME" "${SS_STOP_TIMES[@]}")
         fi
         [[ ${#SS_STOP_TIMES[@]} -gt 0 ]] && SHOWSTOP=1 
