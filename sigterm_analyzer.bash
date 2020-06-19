@@ -3,6 +3,7 @@
 # Purpose: Provide insight into SIGTERM log messages
 #
 # New in version:
+#  2.4 - Fixed bug where OS Process/Service SIGTERM count included OS Process/Service Check SIGTERMs
 #  2.3 - Showstopper log message changed, so had to update the showstopper detection lines
 #  2.2 - Added Process name to monitor-output
 #      - Fixed bug where backspace or non-numeric responses to variables threw errors
@@ -23,7 +24,7 @@
 #      - Code clean-up
 #      - Support for using Collector Name instead of ID
 #
-VER="2.3"
+VER="2.4"
 re='^[0-9]+$'
 EXCLUDE_COUNT=0
 declare -a APP_CAT DEV_CAT
@@ -310,6 +311,8 @@ COL_NAME="$(sql_cmd "SELECT name FROM master.system_settings_licenses WHERE id=$
 COL_DID=$(sql_cmd "SELECT id FROM master_dev.legend_device WHERE device=\"$COL_NAME\" AND ip != ''")
 
 [[ $PROC_NUM -eq 11 ]] && QUERY="$QUERY AND message NOT LIKE \"%'%\""
+[[ $PROC_NUM -eq 14 || $PROC_NUM -eq 16 ]] && QUERY="$QUERY AND message NOT LIKE '%Check%'"
+
 get_logs
 if [ $NUM_FOUND -gt 0 ] ; then
         start_report 
